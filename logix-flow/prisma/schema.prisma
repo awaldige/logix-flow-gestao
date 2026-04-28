@@ -1,0 +1,127 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// 👨‍💼 MOTORISTAS
+// ==========================================
+model drivers {
+  id               Int            @id @default(autoincrement())
+  name             String         @db.VarChar(150)
+  license_number   String         @unique @db.VarChar(20)
+  license_category String         @db.VarChar(5)
+  status           drivers_status @default(ACTIVE)
+  phone            String?        @db.VarChar(20)
+  created_at       DateTime       @default(now()) @db.Timestamp(0)
+  trips            trips[]
+}
+
+// ==========================================
+// 🚛 VEÍCULOS
+// ==========================================
+model vehicles {
+  id           Int             @id @default(autoincrement())
+  plate        String          @unique @db.VarChar(10)
+  model        String          @db.VarChar(100)
+  type         vehicles_type   @default(TRUCK)
+  status       vehicles_status @default(AVAILABLE)
+  current_km   Decimal?        @default(0.00) @db.Decimal(10, 2)
+  created_at   DateTime        @default(now()) @db.Timestamp(0)
+  trips        trips[]
+  maintenances maintenances[] // <-- Relação adicionada
+}
+
+// ==========================================
+// 🛠️ MANUTENÇÃO (MAINTENANCE)
+// ==========================================
+model maintenances {
+  id          Int      @id @default(autoincrement())
+  vehicle_id  Int
+  description String   @db.VarChar(255)
+  service_date DateTime @default(now()) @db.Date
+  cost        Decimal  @db.Decimal(10, 2)
+  workshop    String?  @db.VarChar(100)
+  created_at  DateTime @default(now()) @db.Timestamp(0)
+
+  // Relação
+  vehicle vehicles @relation(fields: [vehicle_id], references: [id], onDelete: Cascade)
+
+  @@index([vehicle_id])
+}
+
+// ==========================================
+// 🛣️ VIAGENS
+// ==========================================
+model trips {
+  id                  Int          @id @default(autoincrement())
+  driver_id           Int?
+  vehicle_id          Int?
+  origin_address      String?      @db.VarChar(255)
+  destination_address String?      @db.VarChar(255)
+  origin_lat          Decimal?     @db.Decimal(10, 8)
+  origin_lng          Decimal?     @db.Decimal(11, 8)
+  dest_lat            Decimal?     @db.Decimal(10, 8)
+  dest_lng            Decimal?     @db.Decimal(11, 8)
+  status              trips_status @default(PLANNED)
+  start_at            DateTime?    @db.DateTime(0)
+  end_at              DateTime?    @db.DateTime(0)
+  created_at          DateTime     @default(now()) @db.Timestamp(0)
+  
+  // Relações
+  driver    drivers?    @relation(fields: [driver_id], references: [id])
+  vehicle   vehicles?   @relation(fields: [vehicle_id], references: [id])
+  fuel_logs fuel_logs[]
+
+  @@index([driver_id])
+  @@index([vehicle_id])
+}
+
+// ==========================================
+// ⛽ ABASTECIMENTO (FUEL LOGS)
+// ==========================================
+model fuel_logs {
+  id             Int      @id @default(autoincrement())
+  trip_id        Int?
+  liters         Decimal  @db.Decimal(10, 2)
+  cost_per_liter Decimal  @db.Decimal(10, 2)
+  total_paid     Decimal? @db.Decimal(10, 2)
+  location       String?  @db.VarChar(100)
+  created_at     DateTime @default(now()) @db.Timestamp(0)
+  
+  trip trips? @relation(fields: [trip_id], references: [id], onDelete: Cascade)
+
+  @@index([trip_id])
+}
+
+// ==========================================
+// 📊 ENUMS
+// ==========================================
+enum vehicles_type {
+  TRUCK
+  VAN
+  CAR
+}
+
+enum drivers_status {
+  ACTIVE
+  ON_LEAVE
+  IN_TRIP
+}
+
+enum vehicles_status {
+  AVAILABLE
+  IN_TRANSIT
+  MAINTENANCE
+}
+
+enum trips_status {
+  PLANNED
+  ONGOING
+  COMPLETED
+  CANCELLED
+}

@@ -1,0 +1,131 @@
+{
+  "veiculos": [
+    {
+      "model": "Mercedes-Benz Sprinter",
+      "plate": "LOG-5A12",
+      "current_km": 125500,
+      "status": "DISPONÍVEL",
+      "id": "g6Yne0-ULR8"
+    },
+    {
+      "model": "Volkswagen Delivery 9.170",
+      "plate": "FLW-9K88",
+      "current_km": 45200,
+      "status": "DISPONÍVEL",
+      "id": "8BrRBScB8CM"
+    },
+    {
+      "model": "Ford Cargo 2429",
+      "plate": "AWT-3B45",
+      "current_km": 210400,
+      "status": "MANUTENÇÃO",
+      "id": "4etMVLTQy5A"
+    },
+    {
+      "model": "Iveco Daily 35S14",
+      "plate": "NXS-7J21",
+      "current_km": 12800,
+      "status": "DISPONÍVEL",
+      "id": "HwNX6SwBpBA"
+    },
+    {
+      "model": "Volvo FH 540",
+      "plate": "GTR-2X99",
+      "current_km": 350800,
+      "status": "DISPONÍVEL",
+      "id": "1kOCGWBEcOI"
+    }
+  ],
+  "drivers": [
+    {
+      "name": "Ricardo Oliveira",
+      "license_number": "44556677889",
+      "license_category": "E",
+      "phone": "(11) 98888-7766",
+      "id": "uf97DH3npu8"
+    },
+    {
+      "name": "Marcos Vinícius",
+      "license_number": "11223344556",
+      "license_category": "D",
+      "phone": "(21) 97777-6655",
+      "id": "u3dtZcJ4RXo"
+    },
+    {
+      "name": "Ana Paula Souza",
+      "license_number": "99887766554",
+      "license_category": "D",
+      "phone": "(31) 96666-5544",
+      "id": "Ev8AEMvGh0g"
+    },
+    {
+      "name": "Carlos Alberto",
+      "license_number": "55664477332",
+      "license_category": "AD",
+      "phone": "(51) 95555-4433",
+      "id": "0ISaiCUKO5g"
+    },
+    {
+      "name": "Juliana Mendes",
+      "license_number": "33442211998",
+      "license_category": "d",
+      "phone": "(11) 93333-2211",
+      "id": "pC5xMaYmE7E"
+    },
+    {
+      "name": "Fernando Costa",
+      "license_number": "77889900112",
+      "license_category": "AE",
+      "phone": "(12) 93333-2211",
+      "id": "817gwJD5-KA"
+    }
+  ],
+  "trips": [
+    {
+      "origin_address": "São Paulo, SP",
+      "destination_address": "Rio de Janeiro, RJ",
+      "driver_id": "uf97DH3npu8",
+      "vehicle_id": "1kOCGWBEcOI",
+      "start_km": 350800,
+      "status": "ONGOING",
+      "id": "_0du1BSuzNA"
+    },
+    {
+      "origin_address": "Curitiba, PR",
+      "destination_address": "Joinville, SC",
+      "driver_id": "Ev8AEMvGh0g",
+      "vehicle_id": "g6Yne0-ULR8",
+      "start_km": 125500,
+      "status": "ONGOING",
+      "id": "MKQvD3d65Ps"
+    }
+  ],
+  "fuel_logs": [
+    {
+      "trip_id": "_0du1BSuzNA",
+      "location": "Posto Graal Petropen",
+      "liters": 120.6,
+      "cost_per_liter": 5.89,
+      "total_paid": 710.33,
+      "id": "yUOxFoB3MlU"
+    },
+    {
+      "trip_id": "MKQvD3d65Ps",
+      "location": "Ipiranga Rota Sul",
+      "liters": 45,
+      "cost_per_liter": 6.12,
+      "total_paid": 275.4,
+      "id": "geHOGT8MaYI"
+    }
+  ],
+  "maintenances": [
+    {
+      "vehicle_id": "4etMVLTQy5A",
+      "description": "Troca de Pastilhas de Freio",
+      "workshop": "Oficina Central Truck",
+      "cost": 850.00,
+      "date": "2026-04-22T10:00:00Z",
+      "id": "m1A2b3C4"
+    }
+  ]
+}
