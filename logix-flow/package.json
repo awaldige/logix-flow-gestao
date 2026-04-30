@@ -1,12 +1,12 @@
 {
   "name": "logix-flow",
   "version": "1.0.0",
-  "type": "module",
   "description": "Sistema de Logística Logix Flow",
-  "main": "src/server.ts",
+  "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch --env-file=.env src/server.ts",
-    "start": "tsx --env-file=.env src/server.ts"
+    "build": "tsc",
+    "start": "node dist/server.js"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
