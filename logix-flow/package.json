@@ -2,27 +2,19 @@
   "name": "logix-flow",
   "version": "1.0.0",
   "type": "module",
-<<<<<<< HEAD
-  "main": "dist/server.js",
- "scripts": {
-  "dev": "tsx watch src/server.ts",
-  "build": "tsc",
-  "start": "node dist/server.js",
-  "postinstall": "prisma generate"
-}
-  "dependencies": {
-    "@prisma/client": "^5.22.0",
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.7",
-    "express": "^4.21.2"
-=======
   "description": "Sistema de Logística Logix Flow",
   "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch --env-file=.env src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js"
->>>>>>> 42f13e8 (fix: remove dist from repository and clean production setup)
+    "start": "node dist/server.js",
+    "postinstall": "prisma generate"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2"
   },
   "devDependencies": {
     "@flydotio/dockerfile": "^0.7.10",
@@ -31,16 +23,6 @@
     "@types/node": "^22.19.17",
     "prisma": "^5.22.0",
     "tsx": "^4.19.2",
-<<<<<<< HEAD
-    "typescript": "^5.6.3"
-=======
     "typescript": "^5.9.3"
-  },
-  "dependencies": {
-    "@prisma/client": "^5.22.0",
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.7",
-    "express": "^4.21.2"
->>>>>>> 42f13e8 (fix: remove dist from repository and clean production setup)
   }
 }
