@@ -1,14 +1,17 @@
 {
   "name": "logix-flow",
   "version": "1.0.0",
-  "description": "Sistema de Logística Logix Flow",
   "type": "module",
+  "description": "Sistema de Logística Logix Flow",
   "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
     "postinstall": "prisma generate"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.js"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
