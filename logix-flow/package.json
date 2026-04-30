@@ -2,7 +2,6 @@
   "name": "logix-flow",
   "version": "1.0.0",
   "type": "module",
-  "description": "Sistema de Logística Logix Flow",
   "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch --env-file=.env src/server.ts",
