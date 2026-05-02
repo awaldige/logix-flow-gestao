@@ -20,52 +20,58 @@ const Icons = {
 
 type TabType = 'frota' | 'motoristas' | 'viagens' | 'manutencao' | 'combustivel';
 
+const API_URL = 'https://logix-flow.fly.dev';
+
 export default function App() {
   const [tab, setTab] = useState<TabType>('viagens')
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [kmFinais, setKmFinais] = useState<Record<number, string>>({})
-  const [initialized, setInitialized] = useState(false)
 
   // --- Estados de Dados ---
-  const [veiculos, setVeiculos] = useState([
+  const [veiculos, setVeiculos] = useState<any[]>([
     { id: 1, modelo: 'Scania R450', placa: 'ABC-1234', km_atual: 152000, status: 'DISPONIVEL' }
   ])
-  const [motoristas, setMotoristas] = useState([
+  const [motoristas, setMotoristas] = useState<any[]>([
     { id: 1, nome: 'Carlos Alberto Silva', cnh: '98765432100', telefone: '11 98888-7777', categoria: 'E', status: 'ATIVO' }
   ])
   const [viagens, setViagens] = useState<any[]>([])
   const [manutencoes, setManutencoes] = useState<any[]>([])
   const [abastecimentos, setAbastecimentos] = useState<any[]>([])
-
   const [formData, setFormData] = useState<any>({})
 
-  useEffect(() => {
+  // --- Carregar dados da API ao inicializar ---
+  const fetchData = async () => {
     try {
-      const v = localStorage.getItem('logix_veiculos')
-      const m = localStorage.getItem('logix_motoristas')
-      const tr = localStorage.getItem('logix_viagens')
-      const mn = localStorage.getItem('logix_manutencoes')
-      const ab = localStorage.getItem('logix_abastecimentos')
-      
-      if (v) setVeiculos(JSON.parse(v))
-      if (m) setMotoristas(JSON.parse(m))
-      if (tr) setViagens(JSON.parse(tr))
-      if (mn) setManutencoes(JSON.parse(mn))
-      if (ab) setAbastecimentos(JSON.parse(ab))
-    } catch (err) {}
-    setInitialized(true)
-  }, [])
+      const endpoints: Record<TabType, string> = {
+        frota: `${API_URL}/veiculos`,
+        motoristas: `${API_URL}/motoristas`,
+        viagens: `${API_URL}/viagens`,
+        manutencao: `${API_URL}/manutencoes`,
+        combustivel: `${API_URL}/abastecimentos`,
+      }
+
+      const responses = await Promise.all([
+        fetch(endpoints.frota).then(res => res.json()),
+        fetch(endpoints.motoristas).then(res => res.json()),
+        fetch(endpoints.viagens).then(res => res.json()),
+        fetch(endpoints.manutencao).then(res => res.json()),
+        fetch(endpoints.combustivel).then(res => res.json()),
+      ])
+
+      setVeiculos(responses[0])
+      setMotoristas(responses[1])
+      setViagens(responses[2])
+      setManutencoes(responses[3])
+      setAbastecimentos(responses[4])
+    } catch (error) {
+      console.error("Erro ao buscar dados da API:", error)
+    }
+  }
 
   useEffect(() => {
-    if (initialized) {
-      localStorage.setItem('logix_veiculos', JSON.stringify(veiculos))
-      localStorage.setItem('logix_motoristas', JSON.stringify(motoristas))
-      localStorage.setItem('logix_viagens', JSON.stringify(viagens))
-      localStorage.setItem('logix_manutencoes', JSON.stringify(manutencoes))
-      localStorage.setItem('logix_abastecimentos', JSON.stringify(abastecimentos))
-    }
-  }, [veiculos, motoristas, viagens, manutencoes, abastecimentos, initialized])
+    fetchData()
+  }, [])
 
   const resetForm = () => {
     setFormData({})
@@ -79,61 +85,77 @@ export default function App() {
     setIsFormOpen(true);
   }
 
-  const handleDelete = (id: number) => {
-    if (tab === 'viagens') setViagens(viagens.filter(v => v.id !== id));
-    if (tab === 'frota') setVeiculos(veiculos.filter(v => v.id !== id));
-    if (tab === 'motoristas') setMotoristas(motoristas.filter(e => e.id !== id));
-    if (tab === 'manutencao') setManutencoes(manutencoes.filter(m => m.id !== id));
-    if (tab === 'combustivel') setAbastecimentos(abastecimentos.filter(a => a.id !== id));
+  // --- Excluir dados na API ---
+  const handleDelete = async (id: number) => {
+    try {
+      let endpoint = '';
+      if (tab === 'viagens') endpoint = `/viagens`;
+      if (tab === 'frota') endpoint = `/veiculos`;
+      if (tab === 'motoristas') endpoint = `/motoristas`;
+      if (tab === 'manutencao') endpoint = `/manutencoes`;
+      if (tab === 'combustivel') endpoint = `/abastecimentos`;
+
+      const response = await fetch(`${API_URL}${endpoint}/${id}`, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        fetchData(); // Atualiza a lista da API após deletar
+      }
+    } catch (error) {
+      console.error("Erro ao deletar registro:", error);
+    }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // --- Salvar (Criar ou Atualizar) dados na API ---
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (editingId) {
-      if (tab === 'viagens') setViagens(viagens.map(v => v.id === editingId ? formData : v));
-      if (tab === 'frota') setVeiculos(veiculos.map(v => v.id === editingId ? formData : v));
-      if (tab === 'motoristas') setMotoristas(motoristas.map(e => e.id === editingId ? formData : e));
-      if (tab === 'manutencao') setManutencoes(manutencoes.map(m => m.id === editingId ? formData : m));
-      if (tab === 'combustivel') setAbastecimentos(abastecimentos.map(a => a.id === editingId ? formData : a));
-    } else {
-      const novoId = Date.now();
-      const novoRegisto = { ...formData, id: novoId };
+    try {
+      let endpoint = '';
+      let method = 'POST';
+      let payload = { ...formData };
 
       if (tab === 'viagens') {
-        const vId = Number(novoRegisto.veiculo_id);
-        const mId = Number(novoRegisto.motorista_id);
-        const veiculo = veiculos.find(v => v.id === vId);
-        
-        novoRegisto.status = 'EM_CURSO';
-        novoRegisto.km_inicial = veiculo?.km_atual || 0;
-        novoRegisto.veiculo_modelo = veiculo?.modelo || '';
-        novoRegisto.veiculo_placa = veiculo?.placa || '';
-        novoRegisto.data_inicio = new Date().toLocaleDateString('pt-BR');
-        
-        setVeiculos(v => v.map(item => item.id === vId ? { ...item, status: 'OCUPADO' } : item));
-        setMotoristas(d => d.map(item => item.id === mId ? { ...item, status: 'OCUPADO' } : item));
-        setViagens([novoRegisto, ...viagens]);
+        endpoint = `/viagens`;
+        payload.status = 'EM_CURSO';
+        // Ajuste no formato de data/dados se o seu backend exigir
       } else if (tab === 'frota') {
-        novoRegisto.status = 'DISPONIVEL';
-        setVeiculos([...veiculos, novoRegisto]);
+        endpoint = `/veiculos`;
+        payload.status = 'DISPONIVEL';
       } else if (tab === 'motoristas') {
-        novoRegisto.status = 'ATIVO';
-        setMotoristas([...motoristas, novoRegisto]);
+        endpoint = `/motoristas`;
+        payload.status = 'ATIVO';
       } else if (tab === 'manutencao') {
-        const v = veiculos.find(x => x.id === Number(novoRegisto.veiculo_id));
-        novoRegisto.veiculo_placa = v?.placa;
-        setManutencoes([novoRegisto, ...manutencoes]);
+        endpoint = `/manutencoes`;
       } else if (tab === 'combustivel') {
-        const v = veiculos.find(x => x.id === Number(novoRegisto.veiculo_id));
-        novoRegisto.veiculo_placa = v?.placa;
-        setAbastecimentos([novoRegisto, ...abastecimentos]);
+        endpoint = `/abastecimentos`;
       }
+
+      if (editingId) {
+        endpoint += `/${editingId}`;
+        method = 'PUT'; // ou 'PATCH' dependendo de como sua API foi construída
+      }
+
+      const response = await fetch(`${API_URL}${endpoint}`, {
+        method: method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        fetchData(); // Atualiza a lista da API
+      }
+    } catch (error) {
+      console.error("Erro ao salvar registro:", error);
     }
+    
     resetForm();
   }
 
-  const finalizarViagem = (tripId: number) => {
+  const finalizarViagem = async (tripId: number) => {
     const kmStr = kmFinais[tripId];
     const kmNum = Number(kmStr);
     const viagem = viagens.find(t => t.id === tripId);
@@ -143,19 +165,23 @@ export default function App() {
       return; 
     }
 
-    setViagens(prev => prev.map(t => t.id === tripId ? { 
-      ...t, 
-      status: 'CONCLUIDA', 
-      km_final: kmNum,
-      data_fim: new Date().toLocaleDateString('pt-BR')
-    } : t));
-    
-    setVeiculos(prev => prev.map(v => v.id === Number(viagem?.veiculo_id) ? { ...v, km_atual: kmNum, status: 'DISPONIVEL' } : v));
-    setMotoristas(prev => prev.map(d => d.id === Number(viagem?.motorista_id) ? { ...d, status: 'ATIVO' } : d));
-    
-    const newKms = { ...kmFinais };
-    delete newKms[tripId];
-    setKmFinais(newKms);
+    try {
+      const response = await fetch(`${API_URL}/viagens/${tripId}/finalizar`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ km_final: kmNum })
+      });
+
+      if (response.ok) {
+        fetchData(); // Recarrega os dados online
+        
+        const newKms = { ...kmFinais };
+        delete newKms[tripId];
+        setKmFinais(newKms);
+      }
+    } catch (error) {
+      console.error("Erro ao finalizar viagem:", error);
+    }
   }
 
   return (
@@ -198,17 +224,17 @@ export default function App() {
           {tab === 'frota' && veiculos.map(v => (
             <div key={v.id} className="bg-zinc-900/30 border border-zinc-800/60 p-8 rounded-[2.5rem] relative">
                <div className="flex justify-between items-start mb-4">
-                 <div>
-                    <h2 className="text-3xl font-black text-white italic leading-tight">{v.placa}</h2>
-                    <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">{v.modelo}</p>
-                 </div>
-                 <div className={`px-2 py-1 rounded text-[8px] font-black uppercase ${v.status === 'DISPONIVEL' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-blue-500/10 text-blue-500'}`}>
-                    {v.status}
-                 </div>
+                  <div>
+                     <h2 className="text-3xl font-black text-white italic leading-tight">{v.placa}</h2>
+                     <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">{v.modelo}</p>
+                  </div>
+                  <div className={`px-2 py-1 rounded text-[8px] font-black uppercase ${v.status === 'DISPONIVEL' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-blue-500/10 text-blue-500'}`}>
+                     {v.status}
+                  </div>
                </div>
                <div className="mt-8 pt-6 border-t border-zinc-800/50 flex justify-between items-baseline">
                   <span className="text-[8px] font-black text-zinc-600 uppercase">Odômetro Atual</span>
-                  <span className="text-xl font-bold text-white">{v.km_atual.toLocaleString()} <span className="text-[10px] text-zinc-500">KM</span></span>
+                  <span className="text-xl font-bold text-white">{v.km_atual ? v.km_atual.toLocaleString() : '0'} <span className="text-[10px] text-zinc-500">KM</span></span>
                </div>
                <div className="flex gap-2 mt-6">
                   <button onClick={() => handleEdit(v)} className="flex-1 border border-zinc-800 text-[8px] font-black uppercase py-3 rounded-xl hover:bg-zinc-800 transition-all">Editar</button>
@@ -217,17 +243,17 @@ export default function App() {
             </div>
           ))}
 
-          {/* Aba MOTORISTAS - Expandida */}
+          {/* Aba MOTORISTAS */}
           {tab === 'motoristas' && motoristas.map(m => (
             <div key={m.id} className="bg-zinc-900/30 border border-zinc-800/60 p-8 rounded-[2.5rem]">
                <div className="flex justify-between items-start mb-6">
-                 <div>
-                    <h2 className="text-lg font-black text-white uppercase leading-tight">{m.nome}</h2>
-                    <span className="text-[10px] font-mono text-zinc-500">CNH: {m.cnh}</span>
-                 </div>
-                 <div className="bg-zinc-950 p-2 rounded-lg border border-zinc-800">
-                    <span className="text-[14px] font-black text-blue-500">{m.categoria}</span>
-                 </div>
+                  <div>
+                     <h2 className="text-lg font-black text-white uppercase leading-tight">{m.nome}</h2>
+                     <span className="text-[10px] font-mono text-zinc-500">CNH: {m.cnh}</span>
+                  </div>
+                  <div className="bg-zinc-950 p-2 rounded-lg border border-zinc-800">
+                     <span className="text-[14px] font-black text-blue-500">{m.categoria}</span>
+                  </div>
                </div>
                
                <div className="space-y-3 mb-6">
@@ -246,98 +272,98 @@ export default function App() {
                </div>
             </div>
           ))}
-{/* Aba VIAGENS - Incluindo Botão Editar */}
-{tab === 'viagens' && viagens.map(t => {
-  const m = motoristas.find(e => e.id === Number(t.motorista_id));
-  return (
-    <div key={t.id} className="bg-zinc-900/30 border border-zinc-800/60 p-8 rounded-[2.5rem] relative">
-      <div className="flex justify-between items-start mb-6">
-          <div className="flex flex-col gap-1">
-             <div className="flex items-center gap-2 text-white font-black text-sm uppercase">
-               <span>{t.origem}</span>
-               <Icons.ArrowRight />
-               <span className="text-blue-500">{t.destino}</span>
-             </div>
-             <span className="text-[9px] text-zinc-600 font-bold uppercase">{t.data_inicio}</span>
-          </div>
-          <div className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${t.status === 'EM_CURSO' ? 'bg-blue-500/10 text-blue-500' : 'bg-emerald-500/10 text-emerald-500'}`}>
-           {t.status === 'EM_CURSO' ? 'Em Trânsito' : 'Finalizada'}
-         </div>
-      </div>
 
-      <div className="space-y-4 mb-8">
-        <div className="bg-zinc-950/50 p-4 rounded-2xl border border-zinc-800/30">
-          <div className="flex justify-between items-start mb-2">
-             <div>
-               <span className="text-[8px] font-black text-zinc-700 uppercase block">Veículo</span>
-               <span className="text-[10px] font-bold text-white">{t.veiculo_placa}</span>
-             </div>
-             <div className="text-right">
-               <span className="text-[8px] font-black text-zinc-700 uppercase block">Modelo</span>
-               <span className="text-[10px] font-bold text-zinc-400">{t.veiculo_modelo}</span>
-             </div>
-          </div>
-          <div className="pt-2 border-t border-zinc-900">
-            <span className="text-[8px] font-black text-zinc-700 uppercase block">Condutor</span>
-            <span className="text-[10px] font-bold text-zinc-300">{m?.nome || '---'}</span>
-          </div>
-        </div>
+          {/* Aba VIAGENS */}
+          {tab === 'viagens' && viagens.map(t => {
+            const m = motoristas.find(e => e.id === Number(t.motorista_id));
+            return (
+              <div key={t.id} className="bg-zinc-900/30 border border-zinc-800/60 p-8 rounded-[2.5rem] relative">
+                <div className="flex justify-between items-start mb-6">
+                    <div className="flex flex-col gap-1">
+                       <div className="flex items-center gap-2 text-white font-black text-sm uppercase">
+                         <span>{t.origem}</span>
+                         <Icons.ArrowRight />
+                         <span className="text-blue-500">{t.destino}</span>
+                       </div>
+                       <span className="text-[9px] text-zinc-600 font-bold uppercase">{t.data_inicio}</span>
+                    </div>
+                    <div className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${t.status === 'EM_CURSO' ? 'bg-blue-500/10 text-blue-500' : 'bg-emerald-500/10 text-emerald-500'}`}>
+                       {t.status === 'EM_CURSO' ? 'Em Trânsito' : 'Finalizada'}
+                    </div>
+                </div>
 
-        <div className="flex justify-between border-b border-zinc-800/50 pb-2">
-          <span className="text-[9px] font-bold text-zinc-600 uppercase">Partida</span>
-          <span className="text-[10px] font-mono text-zinc-400">{t.km_inicial} KM</span>
-        </div>
-        {t.status === 'CONCLUIDA' && (
-          <div className="flex justify-between">
-            <span className="text-[9px] font-bold text-emerald-600 uppercase">Chegada</span>
-            <span className="text-[10px] font-mono text-emerald-400">{t.km_final} KM</span>
-          </div>
-        )}
-      </div>
+                <div className="space-y-4 mb-8">
+                  <div className="bg-zinc-950/50 p-4 rounded-2xl border border-zinc-800/30">
+                    <div className="flex justify-between items-start mb-2">
+                       <div>
+                         <span className="text-[8px] font-black text-zinc-700 uppercase block">Veículo</span>
+                         <span className="text-[10px] font-bold text-white">{t.veiculo_placa}</span>
+                       </div>
+                       <div className="text-right">
+                         <span className="text-[8px] font-black text-zinc-700 uppercase block">Modelo</span>
+                         <span className="text-[10px] font-bold text-zinc-400">{t.veiculo_modelo}</span>
+                       </div>
+                    </div>
+                    <div className="pt-2 border-t border-zinc-900">
+                       <span className="text-[8px] font-black text-zinc-700 uppercase block">Condutor</span>
+                       <span className="text-[10px] font-bold text-zinc-300">{m?.nome || '---'}</span>
+                    </div>
+                  </div>
 
-      {/* Seção de Ações */}
-      <div className="space-y-3">
-        {t.status === 'EM_CURSO' ? (
-          <div className="flex gap-2">
-             <input 
-              type="number" 
-              placeholder="KM Chegada" 
-              className="bg-zinc-950 border border-zinc-800 px-4 py-3 rounded-xl text-xs w-full text-white outline-none focus:border-emerald-600"
-              value={kmFinais[t.id] || ''}
-              onChange={e => setKmFinais({...kmFinais, [t.id]: e.target.value})}
-            />
-            <button 
-              onClick={() => finalizarViagem(t.id)}
-              className="bg-emerald-600 text-white px-4 rounded-xl font-black uppercase text-[9px] hover:bg-emerald-500 transition-all flex items-center justify-center"
-            >
-              OK
-            </button>
-          </div>
-        ) : null}
+                  <div className="flex justify-between border-b border-zinc-800/50 pb-2">
+                    <span className="text-[9px] font-bold text-zinc-600 uppercase">Partida</span>
+                    <span className="text-[10px] font-mono text-zinc-400">{t.km_inicial} KM</span>
+                  </div>
+                  {t.status === 'CONCLUIDA' && (
+                    <div className="flex justify-between">
+                      <span className="text-[9px] font-bold text-emerald-600 uppercase">Chegada</span>
+                      <span className="text-[10px] font-mono text-emerald-400">{t.km_final} KM</span>
+                    </div>
+                  )}
+                </div>
 
-        <div className="flex gap-2">
-          <button 
-            onClick={() => handleEdit(t)} 
-            className="flex-1 border border-zinc-800/50 text-zinc-500 py-3 rounded-xl text-[9px] font-black uppercase hover:text-white hover:border-zinc-600 transition-all flex items-center justify-center gap-2"
-          >
-            <Icons.Edit /> Editar
-          </button>
+                <div className="space-y-3">
+                  {t.status === 'EM_CURSO' ? (
+                    <div className="flex gap-2">
+                       <input 
+                         type="number" 
+                         placeholder="KM Chegada" 
+                         className="bg-zinc-950 border border-zinc-800 px-4 py-3 rounded-xl text-xs w-full text-white outline-none focus:border-emerald-600"
+                         value={kmFinais[t.id] || ''}
+                         onChange={e => setKmFinais({...kmFinais, [t.id]: e.target.value})}
+                       />
+                       <button 
+                         onClick={() => finalizarViagem(t.id)}
+                         className="bg-emerald-600 text-white px-4 rounded-xl font-black uppercase text-[9px] hover:bg-emerald-500 transition-all flex items-center justify-center"
+                       >
+                         OK
+                       </button>
+                    </div>
+                  ) : null}
 
-          {t.status === 'CONCLUIDA' && (
-            <button 
-              onClick={() => handleDelete(t.id)} 
-              className="px-4 border border-zinc-800/50 text-zinc-700 py-3 rounded-xl hover:text-red-500 transition-all flex items-center justify-center"
-            >
-              <Icons.Trash />
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-})}
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => handleEdit(t)} 
+                      className="flex-1 border border-zinc-800/50 text-zinc-500 py-3 rounded-xl text-[9px] font-black uppercase hover:text-white hover:border-zinc-600 transition-all flex items-center justify-center gap-2"
+                    >
+                      <Icons.Edit /> Editar
+                    </button>
 
-          {/* Aba MANUTENÇÃO - Com Seletor de Veículo */}
+                    {t.status === 'CONCLUIDA' && (
+                      <button 
+                        onClick={() => handleDelete(t.id)} 
+                        className="px-4 border border-zinc-800/50 text-zinc-700 py-3 rounded-xl hover:text-red-500 transition-all flex items-center justify-center"
+                      >
+                        <Icons.Trash />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+
+          {/* Aba MANUTENÇÃO */}
           {tab === 'manutencao' && manutencoes.map(m => (
             <div key={m.id} className="bg-zinc-900/30 border border-zinc-800/60 p-8 rounded-[2.5rem]">
                <div className="flex items-center gap-3 text-orange-500 mb-4">
@@ -347,14 +373,14 @@ export default function App() {
                <h2 className="text-lg font-bold text-white mb-1 uppercase tracking-tight">{m.servico}</h2>
                <p className="text-[10px] text-zinc-500 font-black uppercase">{m.veiculo_placa}</p>
                <div className="mt-4 pt-4 border-t border-zinc-800/50 flex justify-between items-center">
-                  <span className="text-[14px] font-black text-zinc-100">R$ {Number(m.valor).toLocaleString('pt-BR')}</span>
+                  <span className="text-[14px] font-black text-zinc-100">R$ {m.valor ? Number(m.valor).toLocaleString('pt-BR') : '0'}</span>
                   <span className="text-[9px] text-zinc-600 font-bold uppercase">{m.data}</span>
                </div>
                <button onClick={() => handleDelete(m.id)} className="w-full mt-4 text-[8px] font-black uppercase text-zinc-800 hover:text-red-900 transition-all">Remover</button>
             </div>
           ))}
 
-          {/* Aba COMBUSTÍVEL - Com Seletor de Veículo */}
+          {/* Aba COMBUSTÍVEL */}
           {tab === 'combustivel' && abastecimentos.map(a => (
             <div key={a.id} className="bg-zinc-900/30 border border-zinc-800/60 p-8 rounded-[2.5rem]">
                <div className="flex items-center gap-3 text-blue-500 mb-4">
@@ -362,12 +388,12 @@ export default function App() {
                   <span className="text-[10px] font-black uppercase tracking-tighter">Abastecimento</span>
                </div>
                <div className="flex justify-between items-baseline mb-2">
-                 <h2 className="text-xl font-black text-white">{a.litros} <span className="text-[10px] text-zinc-500">L</span></h2>
-                 <span className="text-[10px] text-zinc-500 font-bold uppercase">{a.combustivel}</span>
+                  <h2 className="text-xl font-black text-white">{a.litros} <span className="text-[10px] text-zinc-500">L</span></h2>
+                  <span className="text-[10px] text-zinc-500 font-bold uppercase">{a.combustivel}</span>
                </div>
                <p className="text-[10px] text-zinc-400 font-black uppercase">{a.veiculo_placa}</p>
                <div className="mt-4 pt-4 border-t border-zinc-800/50 flex justify-between items-center">
-                  <span className="text-[12px] font-bold text-zinc-100">R$ {Number(a.total).toLocaleString('pt-BR')}</span>
+                  <span className="text-[12px] font-bold text-zinc-100">R$ {a.total ? Number(a.total).toLocaleString('pt-BR') : '0'}</span>
                   <button onClick={() => handleDelete(a.id)} className="text-zinc-800 hover:text-red-500"><Icons.Trash /></button>
                </div>
             </div>
@@ -379,24 +405,24 @@ export default function App() {
           <div className="fixed inset-0 bg-black/95 backdrop-blur-md z-50 flex items-center justify-center p-4">
             <div className="bg-[#0a0a0a] border border-zinc-800 p-8 rounded-[2.5rem] w-full max-w-md shadow-2xl overflow-y-auto max-h-[90vh]">
                <div className="flex justify-between items-center mb-8">
-                 <h2 className="text-xl font-black text-white uppercase italic">
-                   {editingId ? 'Editar' : 'Novo'} {tab === 'manutencao' ? 'Serviço' : tab === 'combustivel' ? 'Abastecimento' : tab.slice(0, -1)}
-                 </h2>
-                 <button onClick={resetForm} className="text-zinc-600 hover:text-white"><Icons.X /></button>
+                  <h2 className="text-xl font-black text-white uppercase italic">
+                    {editingId ? 'Editar' : 'Novo'} {tab === 'manutencao' ? 'Serviço' : tab === 'combustivel' ? 'Abastecimento' : tab.slice(0, -1)}
+                  </h2>
+                  <button onClick={resetForm} className="text-zinc-600 hover:text-white"><Icons.X /></button>
                </div>
 
                <form onSubmit={handleSubmit} className="space-y-4">
-                 {/* Formulário Frota */}
-                 {tab === 'frota' && (
+                  {/* Formulário Frota */}
+                  {tab === 'frota' && (
                     <div className="space-y-4">
                       <input className="input-field" placeholder="Placa (Ex: ABC-1234)" value={formData.placa || ''} onChange={e => setFormData({...formData, placa: e.target.value.toUpperCase()})} required />
                       <input className="input-field" placeholder="Modelo do Veículo" value={formData.modelo || ''} onChange={e => setFormData({...formData, modelo: e.target.value})} required />
                       <input className="input-field" type="number" placeholder="KM Atual" value={formData.km_atual || ''} onChange={e => setFormData({...formData, km_atual: Number(e.target.value)})} required />
                     </div>
-                 )}
+                  )}
 
-                 {/* Formulário Motoristas */}
-                 {tab === 'motoristas' && (
+                  {/* Formulário Motoristas */}
+                  {tab === 'motoristas' && (
                     <div className="space-y-4">
                       <input className="input-field" placeholder="Nome Completo" value={formData.nome || ''} onChange={e => setFormData({...formData, nome: e.target.value})} required />
                       <div className="grid grid-cols-2 gap-3">
@@ -405,11 +431,11 @@ export default function App() {
                       </div>
                       <input className="input-field" placeholder="Telefone (WhatsApp)" value={formData.telefone || ''} onChange={e => setFormData({...formData, telefone: e.target.value})} required />
                     </div>
-                 )}
+                  )}
 
-                 {/* Formulário Viagens */}
-                 {tab === 'viagens' && (
-                   <>
+                  {/* Formulário Viagens */}
+                  {tab === 'viagens' && (
+                    <>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <label className="label-field">Origem</label>
@@ -438,11 +464,11 @@ export default function App() {
                         ))}
                       </select>
                     </div>
-                   </>
-                 )}
+                    </>
+                  )}
 
-                 {/* Formulário Manutenção */}
-                 {tab === 'manutencao' && (
+                  {/* Formulário Manutenção */}
+                  {tab === 'manutencao' && (
                     <div className="space-y-4">
                       <div>
                         <label className="label-field">Veículo</label>
@@ -457,10 +483,10 @@ export default function App() {
                       <input className="input-field" type="number" placeholder="Valor Gasto (R$)" value={formData.valor || ''} onChange={e => setFormData({...formData, valor: e.target.value})} required />
                       <input className="input-field" type="date" value={formData.data || ''} onChange={e => setFormData({...formData, data: e.target.value})} required />
                     </div>
-                 )}
+                  )}
 
-                 {/* Formulário Combustível */}
-                 {tab === 'combustivel' && (
+                  {/* Formulário Combustível */}
+                  {tab === 'combustivel' && (
                     <div className="space-y-4">
                       <div>
                         <label className="label-field">Veículo</label>
@@ -483,11 +509,11 @@ export default function App() {
                         <input className="input-field" type="number" placeholder="Total R$" value={formData.total || ''} onChange={e => setFormData({...formData, total: e.target.value})} required />
                       </div>
                     </div>
-                 )}
+                  )}
 
-                 <button className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest mt-6 hover:bg-blue-500 transition-all">
-                    Salvar Registro
-                 </button>
+                  <button className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest mt-6 hover:bg-blue-500 transition-all">
+                     Salvar Registro
+                  </button>
                </form>
             </div>
           </div>
