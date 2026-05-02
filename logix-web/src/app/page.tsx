@@ -38,7 +38,7 @@ export default function App() {
   const fetchData = async () => {
     try {
       const endpoints: Record<TabType, string> = {
-        frota: `${API_URL}/veiculos`,
+        frota: `${API_URL}/frota`, // <-- Corrigido para /frota
         motoristas: `${API_URL}/motoristas`,
         viagens: `${API_URL}/viagens`,
         manutencao: `${API_URL}/manutencoes`,
@@ -83,7 +83,7 @@ export default function App() {
     try {
       let endpoint = ''
       if (tab === 'viagens') endpoint = '/viagens'
-      if (tab === 'frota') endpoint = '/veiculos'
+      if (tab === 'frota') endpoint = '/frota' // <-- Corrigido para /frota
       if (tab === 'motoristas') endpoint = '/motoristas'
       if (tab === 'manutencao') endpoint = '/manutencoes'
       if (tab === 'combustivel') endpoint = '/abastecimentos'
@@ -113,11 +113,12 @@ export default function App() {
         endpoint = '/viagens'
         payload.veiculo_id = Number(payload.veiculo_id)
         payload.motorista_id = Number(payload.motorista_id)
+        payload.km_inicial = Number(payload.km_inicial) // Garantindo tipo Number
         if (!editingId) {
           payload.status = 'EM_CURSO'
         }
       } else if (tab === 'frota') {
-        endpoint = '/veiculos'
+        endpoint = '/frota' // <-- Corrigido para /frota
         payload.km_atual = Number(payload.km_atual)
         if (!editingId) {
           payload.status = 'DISPONIVEL'
@@ -158,7 +159,7 @@ export default function App() {
       } else {
         const errText = await response.text()
         console.error("Erro do servidor:", errText)
-        alert("Erro ao salvar os dados. Verifique os campos.")
+        alert(`Erro ao salvar os dados: ${errText}`)
       }
     } catch (error) {
       console.error("Erro de conexão:", error)
@@ -457,34 +458,42 @@ export default function App() {
                   {/* Formulário Viagens */}
                   {tab === 'viagens' && (
                     <>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="label-field">Origem</label>
-                        <input className="input-field" placeholder="Cidade Saída" value={formData.origem || ''} onChange={e => setFormData({...formData, origem: e.target.value})} required />
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="label-field">Origem</label>
+                          <input className="input-field" placeholder="Cidade Saída" value={formData.origem || ''} onChange={e => setFormData({...formData, origem: e.target.value})} required />
+                        </div>
+                        <div>
+                          <label className="label-field">Destino</label>
+                          <input className="input-field" placeholder="Cidade Chegada" value={formData.destino || ''} onChange={e => setFormData({...formData, destino: e.target.value})} required />
+                        </div>
                       </div>
-                      <div>
-                        <label className="label-field">Destino</label>
-                        <input className="input-field" placeholder="Cidade Chegada" value={formData.destino || ''} onChange={e => setFormData({...formData, destino: e.target.value})} required />
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="label-field">KM Inicial</label>
+                          <input className="input-field" type="number" placeholder="KM Inicial" value={formData.km_inicial || ''} onChange={e => setFormData({...formData, km_inicial: e.target.value})} required />
+                        </div>
+                        <div>
+                          <label className="label-field">Veículo Disponível</label>
+                          <select className="input-field" value={formData.veiculo_id || ''} onChange={e => setFormData({...formData, veiculo_id: e.target.value})} required>
+                            <option value="">Selecione...</option>
+                            {veiculos.filter(v => v.status === 'DISPONIVEL' || editingId).map(v => (
+                              <option key={v.id} value={v.id}>{v.placa} - {v.modelo}</option>
+                            ))}
+                          </select>
+                        </div>
                       </div>
-                    </div>
-                    <div>
-                      <label className="label-field">Veículo Disponível</label>
-                      <select className="input-field" value={formData.veiculo_id || ''} onChange={e => setFormData({...formData, veiculo_id: e.target.value})} required>
-                        <option value="">Selecione...</option>
-                        {veiculos.filter(v => v.status === 'DISPONIVEL' || editingId).map(v => (
-                          <option key={v.id} value={v.id}>{v.placa} - {v.modelo}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="label-field">Motorista Ativo</label>
-                      <select className="input-field" value={formData.motorista_id || ''} onChange={e => setFormData({...formData, motorista_id: e.target.value})} required>
-                        <option value="">Selecione...</option>
-                        {motoristas.filter(m => m.status === 'ATIVO' || editingId).map(m => (
-                          <option key={m.id} value={m.id}>{m.nome}</option>
-                        ))}
-                      </select>
-                    </div>
+
+                      <div>
+                        <label className="label-field">Motorista Ativo</label>
+                        <select className="input-field" value={formData.motorista_id || ''} onChange={e => setFormData({...formData, motorista_id: e.target.value})} required>
+                          <option value="">Selecione...</option>
+                          {motoristas.filter(m => m.status === 'ATIVO' || editingId).map(m => (
+                            <option key={m.id} value={m.id}>{m.nome}</option>
+                          ))}
+                        </select>
+                      </div>
                     </>
                   )}
 
