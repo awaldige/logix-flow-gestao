@@ -28,19 +28,13 @@ export default function App() {
   const [editingId, setEditingId] = useState<number | null>(null)
   const [kmFinais, setKmFinais] = useState<Record<number, string>>({})
 
-  // --- Estados de Dados ---
-  const [veiculos, setVeiculos] = useState<any[]>([
-    { id: 1, modelo: 'Scania R450', placa: 'ABC-1234', km_atual: 152000, status: 'DISPONIVEL' }
-  ])
-  const [motoristas, setMotoristas] = useState<any[]>([
-    { id: 1, nome: 'Carlos Alberto Silva', cnh: '98765432100', telefone: '11 98888-7777', categoria: 'E', status: 'ATIVO' }
-  ])
+  const [veiculos, setVeiculos] = useState<any[]>([])
+  const [motoristas, setMotoristas] = useState<any[]>([])
   const [viagens, setViagens] = useState<any[]>([])
   const [manutencoes, setManutencoes] = useState<any[]>([])
   const [abastecimentos, setAbastecimentos] = useState<any[]>([])
   const [formData, setFormData] = useState<any>({})
 
-  // --- Carregar dados da API ao inicializar ---
   const fetchData = async () => {
     try {
       const endpoints: Record<TabType, string> = {
@@ -80,61 +74,74 @@ export default function App() {
   }
 
   const handleEdit = (item: any) => {
-    setFormData({ ...item });
-    setEditingId(item.id);
-    setIsFormOpen(true);
+    setFormData({ ...item })
+    setEditingId(item.id)
+    setIsFormOpen(true)
   }
 
-  // --- Excluir dados na API ---
   const handleDelete = async (id: number) => {
     try {
-      let endpoint = '';
-      if (tab === 'viagens') endpoint = `/viagens`;
-      if (tab === 'frota') endpoint = `/veiculos`;
-      if (tab === 'motoristas') endpoint = `/motoristas`;
-      if (tab === 'manutencao') endpoint = `/manutencoes`;
-      if (tab === 'combustivel') endpoint = `/abastecimentos`;
+      let endpoint = ''
+      if (tab === 'viagens') endpoint = '/viagens'
+      if (tab === 'frota') endpoint = '/veiculos'
+      if (tab === 'motoristas') endpoint = '/motoristas'
+      if (tab === 'manutencao') endpoint = '/manutencoes'
+      if (tab === 'combustivel') endpoint = '/abastecimentos'
 
       const response = await fetch(`${API_URL}${endpoint}/${id}`, {
         method: 'DELETE'
-      });
+      })
 
       if (response.ok) {
-        fetchData(); // Atualiza a lista da API após deletar
+        fetchData()
       }
     } catch (error) {
-      console.error("Erro ao deletar registro:", error);
+      console.error("Erro ao deletar registro:", error)
     }
   }
 
-  // --- Salvar (Criar ou Atualizar) dados na API ---
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    try {
-      let endpoint = '';
-      let method = 'POST';
-      let payload = { ...formData };
+    e.preventDefault()
 
+    try {
+      let endpoint = ''
+      let method = 'POST'
+      let payload = { ...formData }
+
+      // Trata as conversões de tipos esperadas pela API
       if (tab === 'viagens') {
-        endpoint = `/viagens`;
-        payload.status = 'EM_CURSO';
-        // Ajuste no formato de data/dados se o seu backend exigir
+        endpoint = '/viagens'
+        payload.veiculo_id = Number(payload.veiculo_id)
+        payload.motorista_id = Number(payload.motorista_id)
+        if (!editingId) {
+          payload.status = 'EM_CURSO'
+        }
       } else if (tab === 'frota') {
-        endpoint = `/veiculos`;
-        payload.status = 'DISPONIVEL';
+        endpoint = '/veiculos'
+        payload.km_atual = Number(payload.km_atual)
+        if (!editingId) {
+          payload.status = 'DISPONIVEL'
+        }
       } else if (tab === 'motoristas') {
-        endpoint = `/motoristas`;
-        payload.status = 'ATIVO';
+        endpoint = '/motoristas'
+        if (!editingId) {
+          payload.status = 'ATIVO'
+        }
       } else if (tab === 'manutencao') {
-        endpoint = `/manutencoes`;
+        endpoint = '/manutencoes'
+        payload.veiculo_id = Number(payload.veiculo_id)
+        payload.valor = Number(payload.valor)
       } else if (tab === 'combustivel') {
-        endpoint = `/abastecimentos`;
+        endpoint = '/abastecimentos'
+        payload.veiculo_id = Number(payload.veiculo_id)
+        payload.litros = Number(payload.litros)
+        payload.total = Number(payload.total)
       }
 
       if (editingId) {
-        endpoint += `/${editingId}`;
-        method = 'PUT'; // ou 'PATCH' dependendo de como sua API foi construída
+        endpoint += `/${editingId}`
+        method = 'PUT'
+        delete payload.id // Remove a chave id para evitar erros na validação do servidor
       }
 
       const response = await fetch(`${API_URL}${endpoint}`, {
@@ -143,26 +150,30 @@ export default function App() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(payload),
-      });
+      })
 
       if (response.ok) {
-        fetchData(); // Atualiza a lista da API
+        fetchData()
+        resetForm()
+      } else {
+        const errText = await response.text()
+        console.error("Erro do servidor:", errText)
+        alert("Erro ao salvar os dados. Verifique os campos.")
       }
     } catch (error) {
-      console.error("Erro ao salvar registro:", error);
+      console.error("Erro de conexão:", error)
+      alert("Erro ao conectar ao servidor.")
     }
-    
-    resetForm();
   }
 
   const finalizarViagem = async (tripId: number) => {
-    const kmStr = kmFinais[tripId];
-    const kmNum = Number(kmStr);
-    const viagem = viagens.find(t => t.id === tripId);
+    const kmStr = kmFinais[tripId]
+    const kmNum = Number(kmStr)
+    const viagem = viagens.find(t => t.id === tripId)
 
     if (!kmStr || isNaN(kmNum) || kmNum <= (viagem?.km_inicial || 0)) {
-      alert("O KM final deve ser maior que o KM inicial.");
-      return; 
+      alert("O KM final deve ser maior que o KM inicial.")
+      return
     }
 
     try {
@@ -170,17 +181,18 @@ export default function App() {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ km_final: kmNum })
-      });
+      })
 
       if (response.ok) {
-        fetchData(); // Recarrega os dados online
-        
-        const newKms = { ...kmFinais };
-        delete newKms[tripId];
-        setKmFinais(newKms);
+        fetchData()
+        const newKms = { ...kmFinais }
+        delete newKms[tripId]
+        setKmFinais(newKms)
+      } else {
+        alert("Erro ao finalizar viagem no servidor.")
       }
     } catch (error) {
-      console.error("Erro ao finalizar viagem:", error);
+      console.error("Erro ao finalizar viagem:", error)
     }
   }
 
@@ -213,8 +225,17 @@ export default function App() {
             ))}
           </nav>
 
-          <button onClick={() => { setFormData({}); setEditingId(null); setIsFormOpen(true); }} className="bg-white text-black px-6 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-600 hover:text-white transition-all flex items-center gap-2">
-            <Icons.Plus /> Adicionar {tab === 'manutencao' ? 'Serviço' : tab === 'combustivel' ? 'Posto' : tab.slice(0, -1)}
+          <button 
+            onClick={() => { setFormData({}); setEditingId(null); setIsFormOpen(true); }} 
+            className="bg-white text-black px-6 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-600 hover:text-white transition-all flex items-center gap-2"
+          >
+            <Icons.Plus /> Adicionar {
+              tab === 'frota' ? 'Veículo' :
+              tab === 'motoristas' ? 'Motorista' :
+              tab === 'viagens' ? 'Viagem' :
+              tab === 'manutencao' ? 'Serviço' :
+              'Abastecimento'
+            }
           </button>
         </header>
 
@@ -275,7 +296,7 @@ export default function App() {
 
           {/* Aba VIAGENS */}
           {tab === 'viagens' && viagens.map(t => {
-            const m = motoristas.find(e => e.id === Number(t.motorista_id));
+            const m = motoristas.find(e => e.id === Number(t.motorista_id))
             return (
               <div key={t.id} className="bg-zinc-900/30 border border-zinc-800/60 p-8 rounded-[2.5rem] relative">
                 <div className="flex justify-between items-start mb-6">
@@ -406,7 +427,7 @@ export default function App() {
             <div className="bg-[#0a0a0a] border border-zinc-800 p-8 rounded-[2.5rem] w-full max-w-md shadow-2xl overflow-y-auto max-h-[90vh]">
                <div className="flex justify-between items-center mb-8">
                   <h2 className="text-xl font-black text-white uppercase italic">
-                    {editingId ? 'Editar' : 'Novo'} {tab === 'manutencao' ? 'Serviço' : tab === 'combustivel' ? 'Abastecimento' : tab.slice(0, -1)}
+                    {editingId ? 'Editar' : 'Novo'} {tab === 'manutencao' ? 'Serviço' : tab === 'combustivel' ? 'Abastecimento' : tab === 'frota' ? 'Veículo' : tab === 'motoristas' ? 'Motorista' : 'Viagem'}
                   </h2>
                   <button onClick={resetForm} className="text-zinc-600 hover:text-white"><Icons.X /></button>
                </div>
