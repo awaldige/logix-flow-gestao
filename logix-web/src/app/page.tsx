@@ -219,6 +219,17 @@ export default function App() {
     }
   };
 
+  const getFormTitle = () => {
+    switch (tab) {
+      case 'frota': return 'Frota';
+      case 'viagens': return 'Viagem';
+      case 'manutencao': return 'Serviço';
+      case 'combustivel': return 'Abastecimento';
+      case 'motoristas': return 'Motorista';
+      default: return '';
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#050505] text-zinc-300 p-6 md:p-10 font-sans">
       <div className="max-w-6xl mx-auto">
@@ -441,7 +452,7 @@ export default function App() {
             <div className="bg-[#0a0a0a] border border-zinc-800 p-8 rounded-[2.5rem] w-full max-w-md shadow-2xl overflow-y-auto max-h-[90vh]">
                <div className="flex justify-between items-center mb-8">
                  <h2 className="text-xl font-black text-white uppercase italic">
-                   {editingId ? 'Editar' : 'Novo'} {tab === 'manutencao' ? 'Serviço' : tab === 'combustivel' ? 'Abastecimento' : tab.slice(0, -1)}
+                   {editingId ? 'Editar' : 'Novo'} {getFormTitle()}
                  </h2>
                  <button onClick={resetForm} className="text-zinc-600 hover:text-white"><Icons.X /></button>
                </div>
