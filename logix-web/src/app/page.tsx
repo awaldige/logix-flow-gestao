@@ -212,7 +212,7 @@ export default function App() {
     switch (tab) {
       case 'frota': return 'Frota';
       case 'motoristas': return 'Motorista';
-      case 'viagens': return 'Viagem';
+      case 'viagens': return 'Viagens'; // Alterado de "Viagem" para "Viagens"
       case 'manutencao': return 'Serviço';
       case 'combustivel': return 'Posto';
       default: return '';
@@ -222,7 +222,7 @@ export default function App() {
   const getFormTitle = () => {
     switch (tab) {
       case 'frota': return 'Frota';
-      case 'viagens': return 'Viagem';
+      case 'viagens': return 'Viagens'; // Alterado de "Viagem" para "Viagens"
       case 'manutencao': return 'Serviço';
       case 'combustivel': return 'Abastecimento';
       case 'motoristas': return 'Motorista';
@@ -544,33 +544,26 @@ export default function App() {
                         </select>
                       </div>
                       <select className="input-field" value={formData.combustivel || ''} onChange={e => setFormData({...formData, combustivel: e.target.value})} required>
-                        <option value="">Tipo de Combustível</option>
-                        <option value="Diesel S10">Diesel S10</option>
-                        <option value="Diesel S500">Diesel S500</option>
-                        <option value="Arla 32">Arla 32</option>
+                        <option value="">Selecione o combustível...</option>
+                        <option value="Diesel">Diesel</option>
                         <option value="Gasolina">Gasolina</option>
+                        <option value="Etanol">Etanol</option>
                       </select>
-                      <div className="grid grid-cols-2 gap-3">
-                        <input className="input-field" type="number" placeholder="Litros" value={formData.litros || ''} onChange={e => setFormData({...formData, litros: e.target.value})} required />
-                        <input className="input-field" type="number" placeholder="Total R$" value={formData.total || ''} onChange={e => setFormData({...formData, total: e.target.value})} required />
-                      </div>
+                      <input className="input-field" type="number" placeholder="Quantidade (Litros)" value={formData.litros || ''} onChange={e => setFormData({...formData, litros: e.target.value})} required />
+                      <input className="input-field" type="number" placeholder="Valor Total (R$)" value={formData.total || ''} onChange={e => setFormData({...formData, total: e.target.value})} required />
                     </div>
                  )}
 
-                 <button className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest mt-6 hover:bg-blue-500 transition-all">
-                   Salvar Registro
-                 </button>
+                 <div className="flex justify-end gap-3 pt-6 border-t border-zinc-900">
+                    <button type="button" onClick={resetForm} className="px-6 py-3 rounded-xl text-[10px] font-black uppercase text-zinc-600 hover:text-white transition-all">Cancelar</button>
+                    <button type="submit" className="bg-white text-black px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all">Salvar</button>
+                 </div>
                </form>
             </div>
           </div>
         )}
+        
       </div>
-
-      <style jsx>{`
-        .input-field { @apply w-full bg-zinc-950 border border-zinc-900 p-4 rounded-xl text-xs font-bold text-white outline-none focus:border-blue-600 transition-all; }
-        .label-field { @apply block text-[8px] font-black text-zinc-700 uppercase tracking-widest mb-1 ml-1; }
-        select.input-field option { background: #0a0a0a; color: white; }
-      `}</style>
     </div>
   );
-}
+}sd
