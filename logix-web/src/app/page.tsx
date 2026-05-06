@@ -188,7 +188,7 @@ export default function App() {
           </nav>
 
           <button onClick={() => { setFormData({}); setEditingId(null); setIsFormOpen(true); }} className="bg-white text-black px-6 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-600 hover:text-white transition-all flex items-center gap-2">
-            <Icons.Plus /> Adicionar {tab === 'manutencao' ? 'Serviço' : tab === 'combustivel' ? 'Posto' : tab.slice(0, -1)}
+            <Icons.Plus /> Adicionar {tab === 'frota' ? 'Frota' : tab === 'manutencao' ? 'Serviço' : tab === 'combustivel' ? 'Posto' : tab.slice(0, -1)}
           </button>
         </header>
 
@@ -198,13 +198,13 @@ export default function App() {
           {tab === 'frota' && veiculos.map(v => (
             <div key={v.id} className="bg-zinc-900/30 border border-zinc-800/60 p-8 rounded-[2.5rem] relative">
                <div className="flex justify-between items-start mb-4">
-                 <div>
-                    <h2 className="text-3xl font-black text-white italic leading-tight">{v.placa}</h2>
-                    <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">{v.modelo}</p>
-                 </div>
-                 <div className={`px-2 py-1 rounded text-[8px] font-black uppercase ${v.status === 'DISPONIVEL' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-blue-500/10 text-blue-500'}`}>
-                    {v.status}
-                 </div>
+                  <div>
+                     <h2 className="text-3xl font-black text-white italic leading-tight">{v.placa}</h2>
+                     <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">{v.modelo}</p>
+                  </div>
+                  <div className={`px-2 py-1 rounded text-[8px] font-black uppercase ${v.status === 'DISPONIVEL' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-blue-500/10 text-blue-500'}`}>
+                     {v.status}
+                  </div>
                </div>
                <div className="mt-8 pt-6 border-t border-zinc-800/50 flex justify-between items-baseline">
                   <span className="text-[8px] font-black text-zinc-600 uppercase">Odômetro Atual</span>
@@ -221,13 +221,13 @@ export default function App() {
           {tab === 'motoristas' && motoristas.map(m => (
             <div key={m.id} className="bg-zinc-900/30 border border-zinc-800/60 p-8 rounded-[2.5rem]">
                <div className="flex justify-between items-start mb-6">
-                 <div>
-                    <h2 className="text-lg font-black text-white uppercase leading-tight">{m.nome}</h2>
-                    <span className="text-[10px] font-mono text-zinc-500">CNH: {m.cnh}</span>
-                 </div>
-                 <div className="bg-zinc-950 p-2 rounded-lg border border-zinc-800">
-                    <span className="text-[14px] font-black text-blue-500">{m.categoria}</span>
-                 </div>
+                  <div>
+                     <h2 className="text-lg font-black text-white uppercase leading-tight">{m.nome}</h2>
+                     <span className="text-[10px] font-mono text-zinc-500">CNH: {m.cnh}</span>
+                  </div>
+                  <div className="bg-zinc-950 p-2 rounded-lg border border-zinc-800">
+                     <span className="text-[14px] font-black text-blue-500">{m.categoria}</span>
+                  </div>
                </div>
                
                <div className="space-y-3 mb-6">
@@ -246,96 +246,97 @@ export default function App() {
                </div>
             </div>
           ))}
-{/* Aba VIAGENS - Incluindo Botão Editar */}
-{tab === 'viagens' && viagens.map(t => {
-  const m = motoristas.find(e => e.id === Number(t.motorista_id));
-  return (
-    <div key={t.id} className="bg-zinc-900/30 border border-zinc-800/60 p-8 rounded-[2.5rem] relative">
-      <div className="flex justify-between items-start mb-6">
-          <div className="flex flex-col gap-1">
-             <div className="flex items-center gap-2 text-white font-black text-sm uppercase">
-               <span>{t.origem}</span>
-               <Icons.ArrowRight />
-               <span className="text-blue-500">{t.destino}</span>
-             </div>
-             <span className="text-[9px] text-zinc-600 font-bold uppercase">{t.data_inicio}</span>
-          </div>
-          <div className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${t.status === 'EM_CURSO' ? 'bg-blue-500/10 text-blue-500' : 'bg-emerald-500/10 text-emerald-500'}`}>
-           {t.status === 'EM_CURSO' ? 'Em Trânsito' : 'Finalizada'}
-         </div>
-      </div>
+          
+          {/* Aba VIAGENS - Incluindo Botão Editar */}
+          {tab === 'viagens' && viagens.map(t => {
+            const m = motoristas.find(e => e.id === Number(t.motorista_id));
+            return (
+              <div key={t.id} className="bg-zinc-900/30 border border-zinc-800/60 p-8 rounded-[2.5rem] relative">
+                <div className="flex justify-between items-start mb-6">
+                    <div className="flex flex-col gap-1">
+                       <div className="flex items-center gap-2 text-white font-black text-sm uppercase">
+                         <span>{t.origem}</span>
+                         <Icons.ArrowRightArrow />
+                         <span className="text-blue-500">{t.destino}</span>
+                       </div>
+                       <span className="text-[9px] text-zinc-600 font-bold uppercase">{t.data_inicio}</span>
+                    </div>
+                    <div className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${t.status === 'EM_CURSO' ? 'bg-blue-500/10 text-blue-500' : 'bg-emerald-500/10 text-emerald-500'}`}>
+                       {t.status === 'EM_CURSO' ? 'Em Trânsito' : 'Finalizada'}
+                    </div>
+                </div>
 
-      <div className="space-y-4 mb-8">
-        <div className="bg-zinc-950/50 p-4 rounded-2xl border border-zinc-800/30">
-          <div className="flex justify-between items-start mb-2">
-             <div>
-               <span className="text-[8px] font-black text-zinc-700 uppercase block">Veículo</span>
-               <span className="text-[10px] font-bold text-white">{t.veiculo_placa}</span>
-             </div>
-             <div className="text-right">
-               <span className="text-[8px] font-black text-zinc-700 uppercase block">Modelo</span>
-               <span className="text-[10px] font-bold text-zinc-400">{t.veiculo_modelo}</span>
-             </div>
-          </div>
-          <div className="pt-2 border-t border-zinc-900">
-            <span className="text-[8px] font-black text-zinc-700 uppercase block">Condutor</span>
-            <span className="text-[10px] font-bold text-zinc-300">{m?.nome || '---'}</span>
-          </div>
-        </div>
+                <div className="space-y-4 mb-8">
+                  <div className="bg-zinc-950/50 p-4 rounded-2xl border border-zinc-800/30">
+                    <div className="flex justify-between items-start mb-2">
+                       <div>
+                         <span className="text-[8px] font-black text-zinc-700 uppercase block">Veículo</span>
+                         <span className="text-[10px] font-bold text-white">{t.veiculo_placa}</span>
+                       </div>
+                       <div className="text-right">
+                         <span className="text-[8px] font-black text-zinc-700 uppercase block">Modelo</span>
+                         <span className="text-[10px] font-bold text-zinc-400">{t.veiculo_modelo}</span>
+                       </div>
+                    </div>
+                    <div className="pt-2 border-t border-zinc-900">
+                      <span className="text-[8px] font-black text-zinc-700 uppercase block">Condutor</span>
+                      <span className="text-[10px] font-bold text-zinc-300">{m?.nome || '---'}</span>
+                    </div>
+                  </div>
 
-        <div className="flex justify-between border-b border-zinc-800/50 pb-2">
-          <span className="text-[9px] font-bold text-zinc-600 uppercase">Partida</span>
-          <span className="text-[10px] font-mono text-zinc-400">{t.km_inicial} KM</span>
-        </div>
-        {t.status === 'CONCLUIDA' && (
-          <div className="flex justify-between">
-            <span className="text-[9px] font-bold text-emerald-600 uppercase">Chegada</span>
-            <span className="text-[10px] font-mono text-emerald-400">{t.km_final} KM</span>
-          </div>
-        )}
-      </div>
+                  <div className="flex justify-between border-b border-zinc-800/50 pb-2">
+                    <span className="text-[9px] font-bold text-zinc-600 uppercase">Partida</span>
+                    <span className="text-[10px] font-mono text-zinc-400">{t.km_inicial} KM</span>
+                  </div>
+                  {t.status === 'CONCLUIDA' && (
+                    <div className="flex justify-between">
+                      <span className="text-[9px] font-bold text-emerald-600 uppercase">Chegada</span>
+                      <span className="text-[10px] font-mono text-emerald-400">{t.km_final} KM</span>
+                    </div>
+                  )}
+                </div>
 
-      {/* Seção de Ações */}
-      <div className="space-y-3">
-        {t.status === 'EM_CURSO' ? (
-          <div className="flex gap-2">
-             <input 
-              type="number" 
-              placeholder="KM Chegada" 
-              className="bg-zinc-950 border border-zinc-800 px-4 py-3 rounded-xl text-xs w-full text-white outline-none focus:border-emerald-600"
-              value={kmFinais[t.id] || ''}
-              onChange={e => setKmFinais({...kmFinais, [t.id]: e.target.value})}
-            />
-            <button 
-              onClick={() => finalizarViagem(t.id)}
-              className="bg-emerald-600 text-white px-4 rounded-xl font-black uppercase text-[9px] hover:bg-emerald-500 transition-all flex items-center justify-center"
-            >
-              OK
-            </button>
-          </div>
-        ) : null}
+                {/* Seção de Ações */}
+                <div className="space-y-3">
+                  {t.status === 'EM_CURSO' ? (
+                    <div className="flex gap-2">
+                       <input 
+                         type="number" 
+                         placeholder="KM Chegada" 
+                         className="bg-zinc-950 border border-zinc-800 px-4 py-3 rounded-xl text-xs w-full text-white outline-none focus:border-emerald-600"
+                         value={kmFinais[t.id] || ''}
+                         onChange={e => setKmFinais({...kmFinais, [t.id]: e.target.value})}
+                       />
+                       <button 
+                         onClick={() => finalizarViagem(t.id)}
+                         className="bg-emerald-600 text-white px-4 rounded-xl font-black uppercase text-[9px] hover:bg-emerald-500 transition-all flex items-center justify-center"
+                       >
+                         OK
+                       </button>
+                    </div>
+                  ) : null}
 
-        <div className="flex gap-2">
-          <button 
-            onClick={() => handleEdit(t)} 
-            className="flex-1 border border-zinc-800/50 text-zinc-500 py-3 rounded-xl text-[9px] font-black uppercase hover:text-white hover:border-zinc-600 transition-all flex items-center justify-center gap-2"
-          >
-            <Icons.Edit /> Editar
-          </button>
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => handleEdit(t)} 
+                      className="flex-1 border border-zinc-800/50 text-zinc-500 py-3 rounded-xl text-[9px] font-black uppercase hover:text-white hover:border-zinc-600 transition-all flex items-center justify-center gap-2"
+                    >
+                      <Icons.Edit /> Editar
+                    </button>
 
-          {t.status === 'CONCLUIDA' && (
-            <button 
-              onClick={() => handleDelete(t.id)} 
-              className="px-4 border border-zinc-800/50 text-zinc-700 py-3 rounded-xl hover:text-red-500 transition-all flex items-center justify-center"
-            >
-              <Icons.Trash />
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-})}
+                    {t.status === 'CONCLUIDA' && (
+                      <button 
+                        onClick={() => handleDelete(t.id)} 
+                        className="px-4 border border-zinc-800/50 text-zinc-700 py-3 rounded-xl hover:text-red-500 transition-all flex items-center justify-center"
+                      >
+                        <Icons.Trash />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )
+          })}
 
           {/* Aba MANUTENÇÃO - Com Seletor de Veículo */}
           {tab === 'manutencao' && manutencoes.map(m => (
@@ -486,7 +487,7 @@ export default function App() {
                  )}
 
                  <button className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest mt-6 hover:bg-blue-500 transition-all">
-                    Salvar Registro
+                   Salvar Registro
                  </button>
                </form>
             </div>
