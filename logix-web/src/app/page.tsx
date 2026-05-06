@@ -158,6 +158,17 @@ export default function App() {
     setKmFinais(newKms);
   }
 
+  const getButtonLabel = () => {
+    switch (tab) {
+      case 'frota': return 'Frota';
+      case 'motoristas': return 'Motorista';
+      case 'viagens': return 'Viagem';
+      case 'manutencao': return 'Serviço';
+      case 'combustivel': return 'Posto';
+      default: return '';
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#050505] text-zinc-300 p-6 md:p-10 font-sans">
       <div className="max-w-6xl mx-auto">
@@ -188,7 +199,7 @@ export default function App() {
           </nav>
 
           <button onClick={() => { setFormData({}); setEditingId(null); setIsFormOpen(true); }} className="bg-white text-black px-6 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-600 hover:text-white transition-all flex items-center gap-2">
-            <Icons.Plus /> Adicionar {tab === 'frota' ? 'Frota' : tab === 'manutencao' ? 'Serviço' : tab === 'combustivel' ? 'Posto' : tab.slice(0, -1)}
+            <Icons.Plus /> Adicionar {getButtonLabel()}
           </button>
         </header>
 
@@ -247,7 +258,7 @@ export default function App() {
             </div>
           ))}
           
-          {/* Aba VIAGENS - Incluindo Botão Editar */}
+          {/* Aba VIAGENS */}
           {tab === 'viagens' && viagens.map(t => {
             const m = motoristas.find(e => e.id === Number(t.motorista_id));
             return (
@@ -256,7 +267,7 @@ export default function App() {
                     <div className="flex flex-col gap-1">
                        <div className="flex items-center gap-2 text-white font-black text-sm uppercase">
                          <span>{t.origem}</span>
-                         <Icons.ArrowRightArrow />
+                         <Icons.ArrowRight />
                          <span className="text-blue-500">{t.destino}</span>
                        </div>
                        <span className="text-[9px] text-zinc-600 font-bold uppercase">{t.data_inicio}</span>
@@ -296,7 +307,6 @@ export default function App() {
                   )}
                 </div>
 
-                {/* Seção de Ações */}
                 <div className="space-y-3">
                   {t.status === 'EM_CURSO' ? (
                     <div className="flex gap-2">
