@@ -2,6 +2,58 @@
 
 import { useEffect, useState } from 'react'
 
+type TabType = 'frota' | 'motoristas' | 'viagens' | 'manutencao' | 'combustivel';
+
+interface Veiculo {
+  id: number;
+  modelo: string;
+  placa: string;
+  km_atual: number;
+  status: 'DISPONIVEL' | 'OCUPADO';
+}
+
+interface Motorista {
+  id: number;
+  nome: string;
+  cnh: string;
+  telefone: string;
+  categoria: string;
+  status: 'ATIVO' | 'OCUPADO';
+}
+
+interface Viagem {
+  id: number;
+  origem?: string;
+  destino?: string;
+  veiculo_id?: number | string;
+  veiculo_modelo?: string;
+  veiculo_placa?: string;
+  motorista_id?: number | string;
+  status?: 'EM_CURSO' | 'CONCLUIDA';
+  km_inicial?: number;
+  km_final?: number;
+  data_inicio?: string;
+  data_fim?: string;
+}
+
+interface Manutencao {
+  id: number;
+  veiculo_id?: number | string;
+  veiculo_placa?: string;
+  servico?: string;
+  valor?: number | string;
+  data?: string;
+}
+
+interface Abastecimento {
+  id: number;
+  veiculo_id?: number | string;
+  veiculo_placa?: string;
+  combustivel?: string;
+  litros?: number | string;
+  total?: number | string;
+}
+
 // --- Ícones Inline SVG ---
 const Icons = {
   Truck: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg>,
@@ -16,68 +68,66 @@ const Icons = {
   X: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
   ArrowRight: () => <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>,
   Phone: () => <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-}
-
-type TabType = 'frota' | 'motoristas' | 'viagens' | 'manutencao' | 'combustivel';
+};
 
 export default function App() {
-  const [tab, setTab] = useState<TabType>('viagens')
-  const [isFormOpen, setIsFormOpen] = useState(false)
-  const [editingId, setEditingId] = useState<number | null>(null)
-  const [kmFinais, setKmFinais] = useState<Record<number, string>>({})
-  const [initialized, setInitialized] = useState(false)
+  const [tab, setTab] = useState<TabType>('viagens');
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [kmFinais, setKmFinais] = useState<Record<number, string>>({});
+  const [initialized, setInitialized] = useState(false);
 
   // --- Estados de Dados ---
-  const [veiculos, setVeiculos] = useState([
+  const [veiculos, setVeiculos] = useState<Veiculo[]>([
     { id: 1, modelo: 'Scania R450', placa: 'ABC-1234', km_atual: 152000, status: 'DISPONIVEL' }
-  ])
-  const [motoristas, setMotoristas] = useState([
+  ]);
+  const [motoristas, setMotoristas] = useState<Motorista[]>([
     { id: 1, nome: 'Carlos Alberto Silva', cnh: '98765432100', telefone: '11 98888-7777', categoria: 'E', status: 'ATIVO' }
-  ])
-  const [viagens, setViagens] = useState<any[]>([])
-  const [manutencoes, setManutencoes] = useState<any[]>([])
-  const [abastecimentos, setAbastecimentos] = useState<any[]>([])
+  ]);
+  const [viagens, setViagens] = useState<Viagem[]>([]);
+  const [manutencoes, setManutencoes] = useState<Manutencao[]>([]);
+  const [abastecimentos, setAbastecimentos] = useState<Abastecimento[]>([]);
 
-  const [formData, setFormData] = useState<any>({})
+  const [formData, setFormData] = useState<Partial<Viagem & Veiculo & Motorista & Manutencao & Abastecimento>>({});
 
   useEffect(() => {
     try {
-      const v = localStorage.getItem('logix_veiculos')
-      const m = localStorage.getItem('logix_motoristas')
-      const tr = localStorage.getItem('logix_viagens')
-      const mn = localStorage.getItem('logix_manutencoes')
-      const ab = localStorage.getItem('logix_abastecimentos')
+      const v = localStorage.getItem('logix_veiculos');
+      const m = localStorage.getItem('logix_motoristas');
+      const tr = localStorage.getItem('logix_viagens');
+      const mn = localStorage.getItem('logix_manutencoes');
+      const ab = localStorage.getItem('logix_abastecimentos');
       
-      if (v) setVeiculos(JSON.parse(v))
-      if (m) setMotoristas(JSON.parse(m))
-      if (tr) setViagens(JSON.parse(tr))
-      if (mn) setManutencoes(JSON.parse(mn))
-      if (ab) setAbastecimentos(JSON.parse(ab))
+      if (v) setVeiculos(JSON.parse(v));
+      if (m) setMotoristas(JSON.parse(m));
+      if (tr) setViagens(JSON.parse(tr));
+      if (mn) setManutencoes(JSON.parse(mn));
+      if (ab) setAbastecimentos(JSON.parse(ab));
     } catch (err) {}
-    setInitialized(true)
-  }, [])
+    setInitialized(true);
+  }, []);
 
   useEffect(() => {
     if (initialized) {
-      localStorage.setItem('logix_veiculos', JSON.stringify(veiculos))
-      localStorage.setItem('logix_motoristas', JSON.stringify(motoristas))
-      localStorage.setItem('logix_viagens', JSON.stringify(viagens))
-      localStorage.setItem('logix_manutencoes', JSON.stringify(manutencoes))
-      localStorage.setItem('logix_abastecimentos', JSON.stringify(abastecimentos))
+      localStorage.setItem('logix_veiculos', JSON.stringify(veiculos));
+      localStorage.setItem('logix_motoristas', JSON.stringify(motoristas));
+      localStorage.setItem('logix_viagens', JSON.stringify(viagens));
+      localStorage.setItem('logix_manutencoes', JSON.stringify(manutencoes));
+      localStorage.setItem('logix_abastecimentos', JSON.stringify(abastecimentos));
     }
-  }, [veiculos, motoristas, viagens, manutencoes, abastecimentos, initialized])
+  }, [veiculos, motoristas, viagens, manutencoes, abastecimentos, initialized]);
 
   const resetForm = () => {
-    setFormData({})
-    setEditingId(null)
-    setIsFormOpen(false)
-  }
+    setFormData({});
+    setEditingId(null);
+    setIsFormOpen(false);
+  };
 
   const handleEdit = (item: any) => {
     setFormData({ ...item });
     setEditingId(item.id);
     setIsFormOpen(true);
-  }
+  };
 
   const handleDelete = (id: number) => {
     if (tab === 'viagens') setViagens(viagens.filter(v => v.id !== id));
@@ -85,20 +135,20 @@ export default function App() {
     if (tab === 'motoristas') setMotoristas(motoristas.filter(e => e.id !== id));
     if (tab === 'manutencao') setManutencoes(manutencoes.filter(m => m.id !== id));
     if (tab === 'combustivel') setAbastecimentos(abastecimentos.filter(a => a.id !== id));
-  }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (editingId) {
-      if (tab === 'viagens') setViagens(viagens.map(v => v.id === editingId ? formData : v));
-      if (tab === 'frota') setVeiculos(veiculos.map(v => v.id === editingId ? formData : v));
-      if (tab === 'motoristas') setMotoristas(motoristas.map(e => e.id === editingId ? formData : e));
-      if (tab === 'manutencao') setManutencoes(manutencoes.map(m => m.id === editingId ? formData : m));
-      if (tab === 'combustivel') setAbastecimentos(abastecimentos.map(a => a.id === editingId ? formData : a));
+      if (tab === 'viagens') setViagens(viagens.map(v => v.id === editingId ? { ...formData, id: editingId } as Viagem : v));
+      if (tab === 'frota') setVeiculos(veiculos.map(v => v.id === editingId ? { ...formData, id: editingId } as Veiculo : v));
+      if (tab === 'motoristas') setMotoristas(motoristas.map(e => e.id === editingId ? { ...formData, id: editingId } as Motorista : e));
+      if (tab === 'manutencao') setManutencoes(manutencoes.map(m => m.id === editingId ? { ...formData, id: editingId } as Manutencao : m));
+      if (tab === 'combustivel') setAbastecimentos(abastecimentos.map(a => a.id === editingId ? { ...formData, id: editingId } as Abastecimento : a));
     } else {
       const novoId = Date.now();
-      const novoRegisto = { ...formData, id: novoId };
+      const novoRegisto: any = { ...formData, id: novoId };
 
       if (tab === 'viagens') {
         const vId = Number(novoRegisto.veiculo_id);
@@ -131,7 +181,7 @@ export default function App() {
       }
     }
     resetForm();
-  }
+  };
 
   const finalizarViagem = (tripId: number) => {
     const kmStr = kmFinais[tripId];
@@ -148,7 +198,7 @@ export default function App() {
       status: 'CONCLUIDA', 
       km_final: kmNum,
       data_fim: new Date().toLocaleDateString('pt-BR')
-    } : t));
+    } as Viagem : t));
     
     setVeiculos(prev => prev.map(v => v.id === Number(viagem?.veiculo_id) ? { ...v, km_atual: kmNum, status: 'DISPONIVEL' } : v));
     setMotoristas(prev => prev.map(d => d.id === Number(viagem?.motorista_id) ? { ...d, status: 'ATIVO' } : d));
@@ -156,7 +206,7 @@ export default function App() {
     const newKms = { ...kmFinais };
     delete newKms[tripId];
     setKmFinais(newKms);
-  }
+  };
 
   const getButtonLabel = () => {
     switch (tab) {
@@ -228,7 +278,7 @@ export default function App() {
             </div>
           ))}
 
-          {/* Aba MOTORISTAS - Expandida */}
+          {/* Aba MOTORISTAS */}
           {tab === 'motoristas' && motoristas.map(m => (
             <div key={m.id} className="bg-zinc-900/30 border border-zinc-800/60 p-8 rounded-[2.5rem]">
                <div className="flex justify-between items-start mb-6">
@@ -257,7 +307,7 @@ export default function App() {
                </div>
             </div>
           ))}
-          
+
           {/* Aba VIAGENS */}
           {tab === 'viagens' && viagens.map(t => {
             const m = motoristas.find(e => e.id === Number(t.motorista_id));
@@ -348,7 +398,7 @@ export default function App() {
             )
           })}
 
-          {/* Aba MANUTENÇÃO - Com Seletor de Veículo */}
+          {/* Aba MANUTENÇÃO */}
           {tab === 'manutencao' && manutencoes.map(m => (
             <div key={m.id} className="bg-zinc-900/30 border border-zinc-800/60 p-8 rounded-[2.5rem]">
                <div className="flex items-center gap-3 text-orange-500 mb-4">
@@ -365,7 +415,7 @@ export default function App() {
             </div>
           ))}
 
-          {/* Aba COMBUSTÍVEL - Com Seletor de Veículo */}
+          {/* Aba COMBUSTÍVEL */}
           {tab === 'combustivel' && abastecimentos.map(a => (
             <div key={a.id} className="bg-zinc-900/30 border border-zinc-800/60 p-8 rounded-[2.5rem]">
                <div className="flex items-center gap-3 text-blue-500 mb-4">
@@ -373,8 +423,8 @@ export default function App() {
                   <span className="text-[10px] font-black uppercase tracking-tighter">Abastecimento</span>
                </div>
                <div className="flex justify-between items-baseline mb-2">
-                 <h2 className="text-xl font-black text-white">{a.litros} <span className="text-[10px] text-zinc-500">L</span></h2>
-                 <span className="text-[10px] text-zinc-500 font-bold uppercase">{a.combustivel}</span>
+                  <h2 className="text-xl font-black text-white">{a.litros} <span className="text-[10px] text-zinc-500">L</span></h2>
+                  <span className="text-[10px] text-zinc-500 font-bold uppercase">{a.combustivel}</span>
                </div>
                <p className="text-[10px] text-zinc-400 font-black uppercase">{a.veiculo_placa}</p>
                <div className="mt-4 pt-4 border-t border-zinc-800/50 flex justify-between items-center">
@@ -511,5 +561,5 @@ export default function App() {
         select.input-field option { background: #0a0a0a; color: white; }
       `}</style>
     </div>
-  )
+  );
 }
